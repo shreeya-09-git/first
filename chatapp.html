@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Enhanced Real-Time Chat App</title>
+    <!-- Google Fonts for a modern look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- General Body & Reset --- */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        /* --- Utility Classes --- */
+        .hidden {
+            display: none !important;
+        }
+
+        /* --- Main App Container --- */
+        #app-container {
+            height: 100vh;
+            width: 100%;
+        }
+
+        /* --- Authentication Screen --- */
+        #auth-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 28rem; /* 448px */
+            padding: 2rem;
+            background-color: white;
+            border-radius: 0.75rem; /* 12px */
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+
+        .auth-card h2 {
+            font-size: 1.875rem; /* 30px */
+            font-weight: 700;
+            text-align: center;
+            color: #1f2937;
+        }
+
+        .auth-card .auth-toggle-text {
+            margin-top: 0.5rem;
+            font-size: 0.875rem; /* 14px */
+            text-align: center;
+            color: #4b5563;
+        }
+
+        .auth-card .auth-toggle-text a {
+            font-weight: 500;
+            color: #4f46e5;
+            text-decoration: none;
+        }
+        
+        .auth-card .auth-toggle-text a:hover {
+            text-decoration: underline;
+        }
+        
+        #auth-form {
+            margin-top: 1.5rem;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-field {
+            height: 2.5rem;
+            width: 100%;
+            border: none;
+            border-bottom: 2px solid #d1d5db;
+            color: #111827;
+            background-color: transparent;
+            padding: 0;
+            font-size: 1rem;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-bottom-color: #4f46e5;
+        }
+        
+        .input-label {
+            position: absolute;
+            left: 0;
+            top: 0.5rem;
+            font-size: 1rem;
+            color: #6b7280;
+            transition: all 0.2s ease;
+            pointer-events: none; /* Allows click-through */
+        }
+
+        /* Floating label effect */
+        .input-field:focus + .input-label,
+        .input-field:not(:placeholder-shown) + .input-label {
+            top: -1.25rem;
+            font-size: 0.875rem; /* 14px */
+            color: #4b5563;
+        }
+        
+        #auth-error {
+            font-size: 0.875rem;
+            color: #ef4444;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .submit-button {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background-color: #4f46e5;
+            color: white;
+            font-weight: 600;
+            border: none;
+            border-radius: 0.375rem; /* 6px */
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        
+        .submit-button:hover {
+            background-color: #4338ca;
+            transform: scale(1.02);
+        }
+        
+        .submit-button:disabled {
+            background-color: #a5b4fc;
+            cursor: not-allowed;
+        }
+
+        /* --- Chat Screen --- */
+        #chat-screen {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+        }
+
+        .sidebar {
+            width: 25%;
+            background-color: white;
+            border-right: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .sidebar-header .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .sidebar-header h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        
+        #logout-button {
+            font-size: 0.875rem;
+            color: #4f46e5;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        
+        #logout-button:hover {
+            text-decoration: underline;
+        }
+
+        #search-form {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        #search-input {
+            flex: 1;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+
+        #search-button {
+            padding: 0.5rem 0.75rem;
+            border: none;
+            background-color: #4f46e5;
+            color: white;
+            border-radius: 0.375rem;
+            cursor: pointer;
+        }
+
+        #search-results {
+            padding: 0 1rem;
+        }
+        
+        .search-result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .add-friend-btn {
+            background: none;
+            border: 1px solid #4f46e5;
+            color: #4f46e5;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+        }
+
+        #friend-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .friend-item {
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border-left: 4px solid transparent;
+        }
+
+        .friend-item:hover {
+            background-color: #f9fafb;
+        }
+        
+        .friend-item.active {
+             background-color: #eef2ff;
+             border-left-color: #4f46e5;
+        }
+
+        .friend-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .friend-avatar {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 9999px;
+            background-color: #e0e7ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #3730a3;
+            font-weight: 700;
+            font-size: 1.125rem;
+        }
+
+        .delete-friend-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 9999px;
+            color: #9ca3af;
+        }
+        
+        .delete-friend-btn:hover {
+            color: #ef4444;
+        }
+        
+        .delete-friend-btn svg {
+            width: 1.25rem;
+            height: 1.25rem;
+            pointer-events: none; /* Make svg non-clickable */
+        }
+
+        /* --- Main Chat Window --- */
+        #chat-window {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #f9fafb;
+        }
+
+        #chat-header {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-header-info {
+             display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        #chat-avatar {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 9999px;
+            background-color: #4f46e5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+        
+        #chat-name {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        #delete-chat-button {
+            color: #9ca3af;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 9999px;
+        }
+        
+        #delete-chat-button:hover {
+            color: #ef4444;
+        }
+        
+        #delete-chat-button svg {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+
+        #message-container {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column-reverse;
+        }
+
+        .message-wrapper {
+            display: flex;
+            margin: 0.5rem 0;
+        }
+        
+        .message-wrapper.sent {
+            justify-content: flex-end;
+        }
+        
+        .message-wrapper.received {
+            justify-content: flex-start;
+        }
+
+        .message-bubble {
+            max-width: 75%;
+            padding: 0.75rem;
+            border-radius: 1.25rem; /* 20px */
+            font-size: 0.875rem;
+        }
+        
+        .message-bubble.sent {
+            background-color: #4f46e5;
+            color: white;
+            border-bottom-right-radius: 0.5rem;
+        }
+        
+        .message-bubble.received {
+            background-color: white;
+            color: #1f2937;
+            border-bottom-left-radius: 0.5rem;
+            box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+        }
+
+        #welcome-message {
+            text-align: center;
+            color: #6b7280;
+            margin: auto;
+        }
+        
+        #message-form-container {
+            padding: 1rem;
+            background-color: white;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        #message-form {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        #message-input {
+            flex: 1;
+            padding: 0.75rem 1.25rem;
+            border: 1px solid #d1d5db;
+            border-radius: 9999px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        
+        #message-input:focus {
+            outline: none;
+            border-color: #a5b4fc;
+            box-shadow: 0 0 0 2px #c7d2fe;
+        }
+        
+        #message-form button {
+            background-color: #4f46e5;
+            color: white;
+            border-radius: 9999px;
+            padding: 0.75rem;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        
+        #message-form button:hover {
+             background-color: #4338ca;
+             transform: scale(1.1);
+        }
+        
+        #message-form button:disabled {
+            background-color: #a5b4fc;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+        
+        #message-form button svg {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+
+        /* --- Custom Scrollbar --- */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #888; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #555; }
+        
+        /* Media query for smaller screens */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 35%;
+            }
+            .friend-name {
+                display: none; /* Hide name on mobile to save space */
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 antialiased">
+
+    <!-- Main Application Container -->
+    <div id="app-container">
+
+        <!-- Authentication Screen (Visible when logged out) -->
+        <div id="auth-screen">
+            <div class="auth-card">
+                <div>
+                    <h2 id="auth-title">Login</h2>
+                    <p class="auth-toggle-text">
+                        Or <a href="#" id="toggle-auth-mode">Sign up for an account</a>
+                    </p>
+                </div>
+                <form id="auth-form">
+                    <div id="username-group" class="input-group hidden">
+                        <input id="username-input" placeholder=" " class="input-field" required type="text" />
+                        <label for="username-input" class="input-label">Username</label>
+                    </div>
+                    <div class="input-group">
+                        <input id="email-input" placeholder=" " class="input-field" required type="email" />
+                        <label for="email-input" class="input-label">Email address</label>
+                    </div>
+                    <div class="input-group">
+                        <input id="password-input" placeholder=" " class="input-field" required type="password" />
+                        <label for="password-input" class="input-label">Password</label>
+                    </div>
+                     <p id="auth-error" class="hidden"></p>
+                    <button id="auth-button" type="submit" class="submit-button">
+                        Login
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Chat Application Screen (Visible when logged in) -->
+        <div id="chat-screen" class="hidden">
+            <!-- Sidebar / Friend List -->
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <div class="header-top">
+                        <h2>Chats</h2>
+                        <button id="logout-button">Logout</button>
+                    </div>
+                    <form id="search-form">
+                        <input id="search-input" type="search" placeholder="Search user by username...">
+                        <button id="search-button" type="submit">Search</button>
+                    </form>
+                </div>
+                <div id="search-results"></div>
+                <div id="friend-list" class="custom-scrollbar">
+                    <!-- Friend list items will be injected here by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Main Chat Window -->
+            <div id="chat-window">
+                <!-- Chat Header -->
+                <div id="chat-header">
+                    <div class="chat-header-info">
+                        <div id="chat-avatar">👋</div>
+                        <h3 id="chat-name">Select a chat</h3>
+                    </div>
+                    <button id="delete-chat-button" class="hidden">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </div>
+
+                <!-- Message Display Area -->
+                <div id="message-container" class="custom-scrollbar">
+                     <div id="welcome-message">
+                        <p style="font-size: 1.125rem;">Welcome to the chat!</p>
+                        <p>Search for a user by their username to start a conversation.</p>
+                    </div>
+                </div>
+
+                <!-- Message Input Area -->
+                <div id="message-form-container">
+                    <form id="message-form">
+                        <input id="message-input" type="text" placeholder="Type a message..." autocomplete="off" disabled>
+                        <button type="submit" disabled>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK Integration -->
+    <script type="module">
+        // Import Firebase services
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            signOut 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            query, 
+            orderBy, 
+            onSnapshot, 
+            addDoc, 
+            serverTimestamp,
+            getDocs,
+            writeBatch,
+            doc,
+            setDoc,
+            where,
+            getDoc
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // --- IMPORTANT: CONFIGURE FIREBASE HERE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCLWbJAw5Le6Fqxq9THQFYqp2JL5WCPSxk",
+            authDomain: "weba-f5bc5.firebaseapp.com",
+            databaseURL: "https://weba-f5bc5-default-rtdb.firebaseio.com",
+            projectId: "weba-f5bc5",
+            storageBucket: "weba-f5bc5.firebasestorage.app",
+            messagingSenderId: "1054296497174",
+            appId: "1:1054296497174:web:a66dfdc7c0cd3772c1e937",
+            measurementId: "G-XVEJSERLYQ"
+        };
+
+        // --- GEMINI API KEY ---
+        const GEMINI_API_KEY = "AIzaSyBlzux3JiMlL7TExYn6daHnEup5loo0cb0";
+        
+        // --- APP STATE ---
+        const GEMINI_USER_ID = "gemini-ai-bot";
+        let friends = [
+            { id: GEMINI_USER_ID, name: 'Gemini AI ✨', avatar: '🤖' }
+        ];
+        let appState = {
+            currentUser: null,
+            activeChat: null,
+            unsubscribeMessages: null
+        };
+
+        // --- INITIALIZE FIREBASE ---
+        let app, auth, db;
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+        } catch (e) {
+            console.error("Firebase initialization failed. Please provide your firebaseConfig.");
+            document.getElementById('auth-error').textContent = 'Firebase not configured. App is disabled.';
+            document.getElementById('auth-error').classList.remove('hidden');
+            document.querySelector('#auth-button').disabled = true;
+        }
+
+        // --- DOM ELEMENT REFERENCES ---
+        const authScreen = document.getElementById('auth-screen');
+        const chatScreen = document.getElementById('chat-screen');
+        const authForm = document.getElementById('auth-form');
+        const authTitle = document.getElementById('auth-title');
+        const toggleAuthModeLink = document.getElementById('toggle-auth-mode');
+        const authButton = document.getElementById('auth-button');
+        const authError = document.getElementById('auth-error');
+        const emailInput = document.getElementById('email-input');
+        const passwordInput = document.getElementById('password-input');
+        const usernameInput = document.getElementById('username-input');
+        const usernameGroup = document.getElementById('username-group');
+        const logoutButton = document.getElementById('logout-button');
+        const friendListContainer = document.getElementById('friend-list');
+        const messageContainer = document.getElementById('message-container');
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+        const messageSubmitButton = messageForm.querySelector('button');
+        const chatHeader = document.getElementById('chat-header');
+        const chatName = document.getElementById('chat-name');
+        const chatAvatar = document.getElementById('chat-avatar');
+        const welcomeMessage = document.getElementById('welcome-message');
+        const deleteChatButton = document.getElementById('delete-chat-button');
+        const searchForm = document.getElementById('search-form');
+        const searchInput = document.getElementById('search-input');
+        const searchResultsContainer = document.getElementById('search-results');
+
+        // --- AUTHENTICATION LOGIC ---
+        let isLoginMode = true;
+
+        const toggleAuthMode = () => {
+            isLoginMode = !isLoginMode;
+            authTitle.textContent = isLoginMode ? 'Login' : 'Sign Up';
+            authButton.textContent = isLoginMode ? 'Login' : 'Sign Up';
+            toggleAuthModeLink.innerHTML = isLoginMode ? 'Sign up for an account' : 'Already have an account? Login';
+            usernameGroup.classList.toggle('hidden', isLoginMode);
+            authError.classList.add('hidden');
+            authForm.reset();
+        };
+        
+        toggleAuthModeLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            toggleAuthMode();
+        });
+        
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            authButton.disabled = true;
+            authButton.textContent = 'Processing...';
+            authError.classList.add('hidden');
+
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            const username = usernameInput.value.trim().toLowerCase();
+
+            try {
+                if (isLoginMode) {
+                    await signInWithEmailAndPassword(auth, email, password);
+                } else {
+                    // Sign up logic with username
+                    if (username.length < 3) {
+                        throw new Error("Username must be at least 3 characters long.");
+                    }
+
+                    // Check if username is already taken
+                    const usernameDocRef = doc(db, "usernames", username);
+                    const usernameDoc = await getDoc(usernameDocRef);
+                    if (usernameDoc.exists()) {
+                        throw new Error("Username is already taken.");
+                    }
+
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+
+                    // Create user documents in a batch
+                    const batch = writeBatch(db);
+                    // 1. User document for searching
+                    const userDocRef = doc(db, "users", user.uid);
+                    batch.set(userDocRef, { uid: user.uid, email: user.email, username: username });
+                    // 2. Username document for uniqueness check
+                    batch.set(usernameDocRef, { uid: user.uid });
+                    
+                    await batch.commit();
+                }
+            } catch (error) {
+                authError.textContent = error.message;
+                authError.classList.remove('hidden');
+            } finally {
+                authButton.disabled = false;
+                authButton.textContent = isLoginMode ? 'Login' : 'Sign Up';
+            }
+        });
+
+        logoutButton.addEventListener('click', () => {
+            signOut(auth);
+        });
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                appState.currentUser = user;
+                authScreen.classList.add('hidden');
+                chatScreen.classList.remove('hidden');
+                renderFriendList();
+            } else {
+                appState.currentUser = null;
+                appState.activeChat = null;
+                if (appState.unsubscribeMessages) appState.unsubscribeMessages();
+                authScreen.classList.remove('hidden');
+                chatScreen.classList.add('hidden');
+                resetChatUI();
+            }
+        });
+
+        // --- CHAT UI & LOGIC ---
+        function renderFriendList() {
+            friendListContainer.innerHTML = '';
+            friends.forEach(friend => {
+                if(appState.currentUser && friend.id === appState.currentUser.uid) return;
+
+                const friendDiv = document.createElement('div');
+                friendDiv.className = `friend-item`;
+                friendDiv.dataset.friendId = friend.id;
+
+                let deleteButtonHTML = '';
+                if (friend.id !== GEMINI_USER_ID) {
+                    deleteButtonHTML = `
+                        <button data-friend-id="${friend.id}" class="delete-friend-btn">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    `;
+                }
+
+                friendDiv.innerHTML = `
+                    <div class="friend-info">
+                        <div class="friend-avatar">${friend.avatar}</div>
+                        <span class="friend-name">${friend.name}</span>
+                    </div>
+                    ${deleteButtonHTML}
+                `;
+                friendListContainer.appendChild(friendDiv);
+            });
+        }
+        
+        friendListContainer.addEventListener('click', (e) => {
+            const target = e.target;
+            const friendDiv = target.closest('.friend-item');
+
+            if (target.closest('.delete-friend-btn')) {
+                const friendId = target.closest('.delete-friend-btn').dataset.friendId;
+                handleRemoveFriend(friendId);
+            } else if (friendDiv) {
+                const friendId = friendDiv.dataset.friendId;
+                const friend = friends.find(f => f.id === friendId);
+                if (friend) {
+                    selectChat(friend);
+                }
+            }
+        });
+
+        function handleRemoveFriend(friendId) {
+            friends = friends.filter(f => f.id !== friendId);
+            if (appState.activeChat === friendId) {
+                resetChatUI();
+            }
+            renderFriendList();
+        }
+
+        // --- USER SEARCH LOGIC ---
+        searchForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const searchTerm = searchInput.value.trim().toLowerCase();
+            if (searchTerm === '') return;
+
+            searchResultsContainer.innerHTML = '<p>Searching...</p>';
+            try {
+                // IMPORTANT: You will need to create a composite index in your Firebase console
+                // for this query to work. Go to Firestore -> Indexes -> Composite Indexes and create one
+                // for the 'users' collection on the 'username' field (ascending).
+                const usersRef = collection(db, "users");
+                const q = query(usersRef, where("username", "==", searchTerm));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    searchResultsContainer.innerHTML = '<p>No user found.</p>';
+                } else {
+                    searchResultsContainer.innerHTML = '';
+                    querySnapshot.forEach((doc) => {
+                        const user = doc.data();
+                        // Don't show the current user in search results
+                        if(user.uid === appState.currentUser.uid) return;
+
+                        const resultDiv = document.createElement('div');
+                        resultDiv.className = 'search-result-item';
+                        resultDiv.innerHTML = `
+                            <span>${user.username}</span>
+                            <button class="add-friend-btn" data-uid="${user.uid}" data-username="${user.username}">Add</button>
+                        `;
+                        searchResultsContainer.appendChild(resultDiv);
+                    });
+                }
+            } catch (error) {
+                console.error("Error searching for user:", error);
+                searchResultsContainer.innerHTML = '<p>Error searching. (Have you created the Firestore index?)</p>';
+            }
+        });
+        
+        searchResultsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('add-friend-btn')) {
+                const newFriend = {
+                    id: e.target.dataset.uid,
+                    name: e.target.dataset.username,
+                    avatar: e.target.dataset.username[0].toUpperCase()
+                };
+
+                // Avoid adding duplicate friends
+                if (!friends.some(f => f.id === newFriend.id)) {
+                    friends.push(newFriend);
+                    renderFriendList();
+                }
+                
+                searchInput.value = '';
+                searchResultsContainer.innerHTML = '';
+            }
+        });
+
+        function selectChat(friend) {
+            if (appState.activeChat === friend.id) return;
+            appState.activeChat = friend.id;
+            
+            document.querySelectorAll('#friend-list > div').forEach(div => {
+                if(div.dataset.friendId === friend.id) {
+                    div.classList.add('active');
+                } else {
+                    div.classList.remove('active');
+                }
+            });
+
+            chatName.textContent = friend.name;
+            chatAvatar.textContent = friend.avatar;
+            welcomeMessage.classList.add('hidden');
+            deleteChatButton.classList.remove('hidden');
+            messageInput.disabled = false;
+            messageSubmitButton.disabled = false;
+            messageInput.placeholder = `Message ${friend.name}`;
+            messageInput.focus();
+            
+            fetchMessages();
+        }
+
+        async function deleteChatHistory(friendId) {
+            if (!appState.currentUser || !friendId) return;
+            
+            // This function now deletes only the messages sent by the current user.
+            // This is allowed by Firestore security rules.
+            const chatId = [appState.currentUser.uid, friendId].sort().join('_');
+            const messagesRef = collection(db, 'chats', chatId, 'messages');
+            
+            // Query for messages sent by the current user.
+            const q = query(messagesRef, where("senderId", "==", appState.currentUser.uid));
+
+            try {
+                const querySnapshot = await getDocs(q);
+                if (querySnapshot.empty) {
+                    console.log("No messages from you to delete.");
+                    return;
+                }
+
+                const batch = writeBatch(db);
+                querySnapshot.docs.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                await batch.commit();
+                console.log("Your messages have been deleted.");
+            } catch (error) {
+                console.error("Error deleting messages:", error);
+            }
+        }
+
+        deleteChatButton.addEventListener('click', () => {
+            if (confirm("Are you sure you want to delete your messages from this chat?")) {
+                 deleteChatHistory(appState.activeChat);
+            }
+        });
+
+        function fetchMessages() {
+            if (appState.unsubscribeMessages) {
+                appState.unsubscribeMessages(); 
+            }
+
+            const chatId = [appState.currentUser.uid, appState.activeChat].sort().join('_');
+            const messagesRef = collection(db, 'chats', chatId, 'messages');
+            const q = query(messagesRef, orderBy('timestamp', 'asc'));
+
+            messageContainer.innerHTML = '<div style="text-align: center; color: #9ca3af;">Loading messages...</div>';
+
+            appState.unsubscribeMessages = onSnapshot(q, (snapshot) => {
+                messageContainer.innerHTML = '';
+                if (snapshot.empty) {
+                     messageContainer.innerHTML = '<div style="text-align: center; color: #9ca3af; margin: auto;">No messages yet. Say hello!</div>';
+                }
+                snapshot.docs.forEach(doc => {
+                    renderMessage(doc.data());
+                });
+            });
+        }
+
+        function renderMessage(msg) {
+            const isSender = msg.senderId === appState.currentUser.uid;
+            const messageWrapper = document.createElement('div');
+            messageWrapper.className = `message-wrapper ${isSender ? 'sent' : 'received'}`;
+            
+            const text = msg.text.replace(/\n/g, '<br>');
+
+            messageWrapper.innerHTML = `
+                <div class="message-bubble ${isSender ? 'sent' : 'received'}">
+                    <p style="margin:0;">${text}</p>
+                </div>
+            `;
+            messageContainer.prepend(messageWrapper);
+        }
+
+        messageForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = messageInput.value.trim();
+            if (text === '' || !appState.activeChat) return;
+
+            const recipientId = appState.activeChat;
+            messageInput.value = '';
+            const chatId = [appState.currentUser.uid, recipientId].sort().join('_');
+            const messagesRef = collection(db, 'chats', chatId, 'messages');
+            
+            try {
+                await addDoc(messagesRef, {
+                    text: text,
+                    senderId: appState.currentUser.uid,
+                    receiverId: recipientId,
+                    timestamp: serverTimestamp(),
+                    read: false
+                });
+
+                if (recipientId === GEMINI_USER_ID) {
+                    simulateGeminiResponse(text);
+                }
+            } catch (error) {
+                console.error("Error sending message:", error);
+            }
+        });
+        
+        // This function calls the Gemini API to get a response
+        async function simulateGeminiResponse(userMessage) {
+            if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY") {
+                renderMessage({
+                    text: "Gemini API key not configured. Please add your key to the script to enable AI responses.",
+                    senderId: GEMINI_USER_ID,
+                });
+                return;
+            }
+
+            try {
+                const apiKey = GEMINI_API_KEY; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                const payload = { contents: [{ parts: [{ text: userMessage }] }] };
+                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) throw new Error(`API call failed: ${response.status}`);
+                const result = await response.json();
+                const aiText = result.candidates[0]?.content?.parts[0]?.text || "Sorry, I couldn't process that.";
+                
+                renderMessage({ 
+                    text: aiText, 
+                    senderId: GEMINI_USER_ID 
+                });
+
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                renderMessage({ 
+                    text: "Error connecting to AI.", 
+                    senderId: GEMINI_USER_ID 
+                });
+            }
+        }
+
+        function resetChatUI() {
+            messageContainer.innerHTML = '';
+            welcomeMessage.classList.remove('hidden');
+            chatName.textContent = 'Select a chat';
+            chatAvatar.textContent = '👋';
+            deleteChatButton.classList.add('hidden');
+            messageInput.disabled = true;
+            messageSubmitButton.disabled = true;
+            messageInput.placeholder = 'Type a message...';
+        }
+    </script>
+</body>
+</html>
+
